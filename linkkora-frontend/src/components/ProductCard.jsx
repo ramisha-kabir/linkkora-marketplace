@@ -26,13 +26,23 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
     }
   };
 
+  // Resolve image URL from various possible keys and upgrade to https when needed
+  const resolvedImageUrl = (() => {
+    const raw = product?.image_url || product?.product_image || product?.["Image URL"];
+    if (!raw || typeof raw !== 'string') return '';
+    if (raw.startsWith('http://')) {
+      return 'https://' + raw.slice(7);
+    }
+    return raw;
+  })();
+
   return (
     <div className="product-card" onClick={handleCardClick}>
       <div className="product-image-container">
-        {product.product_image ? (
+        {resolvedImageUrl ? (
           <>
             <img 
-              src={product.product_image} 
+              src={resolvedImageUrl} 
               alt={product.product_name}
               className="product-image"
               onError={handleImageError}
