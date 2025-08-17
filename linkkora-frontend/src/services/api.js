@@ -1,46 +1,66 @@
-// API configuration for LinkKora backend
+import axios from 'axios';
+
+// Base URL from environment (Render sets VITE_API_URL)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
 
-export const api = {
-  // Search products with optional filters
-  searchProducts: async (query = '', filters = {}) => {
-    try {
-      const params = new URLSearchParams();
-      
-      if (query) params.append('q', query);
-      if (filters.brand) params.append('brand', filters.brand);
-      if (filters.category) params.append('category', filters.category);
-      if (filters.min_price) params.append('min_price', filters.min_price);
-      if (filters.max_price) params.append('max_price', filters.max_price);
-
-      const response = await fetch(`${API_BASE_URL}/search?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      return [];
-    }
+// Create axios instance with default configuration
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
   },
+});
 
-  // Get all products (for initial load)
-  getAllProducts: async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/search`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching all products:', error);
-      return [];
-    }
+// Request interceptor to log requests
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url, config.params);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
+
+// Response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Search products using the Flask backend
+ * @param {Object} params - Search parameters
+ * @param {string} params.q - Search query
+ * @param {string} params.brand - Brand filter
+ * @param {string} params.category - Category filter
+ * @param {string} params.min_price - Minimum price filter
+ * @param {string} params.max_price - Maximum price filter
+ * @returns {Promise<Array>} Array of products
+ */
+export const searchProducts = async (params = {}) => {
+  try {
+    const response = await api.get('/search', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching products:', error);
+    // Return empty array on error to prevent UI breaks
+    return [];
+  }
+};
+
+/**
+ * Get all products (search with empty query)
+ * @returns {Promise<Array>} Array of all products
+ */
+export const getAllProducts = async () => {
+  return searchProducts({ q: '' });
 };
 
 /**
@@ -111,4 +131,6 @@ export const filterProductsByPrice = (products, minPrice, maxPrice) => {
     if (maxPrice && price > maxPrice) return false;
     return true;
   });
-}; 
+};
+
+export default api; 

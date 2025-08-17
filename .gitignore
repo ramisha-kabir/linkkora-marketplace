@@ -37,3 +37,5 @@ Thumbs.db
 # Logs
 *.log
 .env
+linkkora-frontend/node_modules
+linkkora-frontend/dist

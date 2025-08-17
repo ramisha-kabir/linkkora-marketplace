@@ -4,7 +4,9 @@ import FilterSidebar from './components/FilterSidebar';
 import ProductGrid from './components/ProductGrid';
 import FavouritesPage from './components/FavouritesPage';
 import LandingPage from './components/LandingPage';
-import { api } from './services/api';
+import AccountPage from './components/AccountPage';
+import ContactPage from './components/ContactPage';
+import { searchProducts } from './services/api';
 
 // Brand Slideshow Hero Section Component
 const BrandSlideshow = ({ products }) => {
@@ -129,7 +131,7 @@ function App() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await api.getAllProducts();
+      const data = await searchProducts();
       setProducts(data);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -154,7 +156,7 @@ function App() {
         apiFilters.brand = filters.brand;
       }
       
-      const data = await api.searchProducts(searchQuery, apiFilters);
+      const data = await searchProducts(apiFilters);
       
       // Client-side filtering for multiple brands
       let filteredData = data;
@@ -242,6 +244,10 @@ function App() {
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
         />
+      ) : currentPage === 'account' ? (
+        <AccountPage />
+      ) : currentPage === 'contact' ? (
+        <ContactPage />
       ) : null}
     </div>
   );
