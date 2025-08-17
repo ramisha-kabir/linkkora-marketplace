@@ -51,11 +51,24 @@ class DatabaseMigrator:
                 schema = file.read()
             
             cursor = self.connection.cursor()
-            cursor.execute(schema)
+            
+            # Split the schema into individual statements
+            statements = schema.split(';')
+            
+            for statement in statements:
+                statement = statement.strip()
+                if statement:
+                    try:
+                        cursor.execute(statement)
+                    except Exception as e:
+                        # Ignore errors for existing objects
+                        if "already exists" not in str(e):
+                            print(f"Warning: {e}")
+            
             self.connection.commit()
             cursor.close()
             
-            print("✅ Database tables created successfully!")
+            print("✅ Database tables created/verified successfully!")
             
         except Exception as e:
             print(f"❌ Error creating tables: {e}")
@@ -68,6 +81,16 @@ class DatabaseMigrator:
             
             # Load brands from Excel
             brands_df = pd.read_excel('NNRZ Database.xlsx')
+            # Ensure brand_clean exists (match logic used elsewhere)
+            if 'brand_clean' not in brands_df.columns:
+                brands_df['brand_clean'] = (
+                    brands_df['brand']
+                    .astype(str)
+                    .str.strip()
+                    .str.lower()
+                    .str.replace('+', 'plus')
+                    .str.replace(' ', '')
+                )
             
             # Clean and prepare data
             brands_df = brands_df.fillna('')
@@ -104,9 +127,62 @@ class DatabaseMigrator:
         try:
             print("📊 Loading products from Excel...")
             
-            # Load products from Excel
-            products_df = pd.read_excel('NNRZ Products.xlsx')
+            # Load products from multi-sheet Excel using the same logic as multi_sheet_loader
+            xls = pd.ExcelFile('NNRZ Products.xlsx')
+            clean_products_list = []
             
+            skip_sheets = {'brand name', 'brand name 2', 'Sheet7'}
+            
+            for sheet in xls.sheet_names:
+                if sheet.strip() in skip_sheets:
+                    continue
+                try:
+                    df = pd.read_excel('NNRZ Products.xlsx', sheet_name=sheet)
+                    if df.empty:
+                        continue
+                    
+                    # Standardize column names across all sheets
+                    df.rename(columns={
+                        'product_name': 'Product Name',
+                        'category': 'Category',
+                        'product_link': 'Product URL',
+                        'product_image': 'Image URL',
+                        'product_price': 'Price'
+                    }, inplace=True)
+                    
+                    # Clean brand name from sheet name
+                    brand_clean = sheet.strip().lower().replace('+', 'plus').replace(' ', '')
+                    df['brand_clean'] = brand_clean
+                    
+                    clean_products_list.append(df)
+                except Exception as e:
+                    print(f"Warning: Error loading sheet {sheet}: {e}")
+            
+            if clean_products_list:
+                products_df = pd.concat(clean_products_list, ignore_index=True)
+            else:
+                products_df = pd.DataFrame()
+
+            # Map display brand names from brands workbook using brand_clean
+            try:
+                brands_df = pd.read_excel('NNRZ Database.xlsx')
+                if 'brand_clean' not in brands_df.columns:
+                    brands_df['brand_clean'] = (
+                        brands_df['brand']
+                        .astype(str)
+                        .str.strip()
+                        .str.lower()
+                        .str.replace('+', 'plus')
+                        .str.replace(' ', '')
+                    )
+                brand_map = dict(zip(brands_df['brand_clean'], brands_df['brand']))
+                products_df['brand'] = products_df.get('brand', '')
+                products_df['brand'] = products_df['brand_clean'].map(brand_map).fillna('')
+            except Exception as e:
+                print(f"Warning: could not map brand names from brands Excel: {e}")
+                if 'brand' not in products_df.columns:
+                    products_df['brand'] = ''
+
             # Clean and prepare data
             products_df = products_df.fillna('')
             
