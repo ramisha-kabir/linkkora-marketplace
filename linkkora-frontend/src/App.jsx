@@ -200,6 +200,17 @@ function App() {
     setShowLanding(false);
   };
 
+  const handleLogoClick = () => {
+    // Go to landing page with the "LINCCORA Enter" screen
+    setShowLanding(true);
+  };
+
+  const handleHomeClick = () => {
+    // Go to the main shop view (same as after clicking Enter)
+    setShowLanding(false);
+    setCurrentPage('home');
+  };
+
   // Show landing page first
   if (showLanding) {
     return <LandingPage onEnterShop={handleEnterShop} />;
@@ -213,6 +224,8 @@ function App() {
         onSearchChange={setSearchQuery}
         onSearch={handleSearch}
         onNavigate={handleNavigate}
+        onLogoClick={handleLogoClick}
+        onHomeClick={handleHomeClick}
         favoritesCount={favorites.length}
       />
       

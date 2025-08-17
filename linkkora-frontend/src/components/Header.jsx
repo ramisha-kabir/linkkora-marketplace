@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Heart, User, Home, MessageCircle } from 'lucide-react';
 
-const Header = ({ searchQuery, onSearchChange, onSearch, onNavigate, favoritesCount }) => {
+const Header = ({ searchQuery, onSearchChange, onSearch, onNavigate, onLogoClick, onHomeClick, favoritesCount }) => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     onSearch();
@@ -19,7 +19,7 @@ const Header = ({ searchQuery, onSearchChange, onSearch, onNavigate, favoritesCo
         <div className="header-content">
           <button 
             className="logo" 
-            onClick={() => onNavigate('home')}
+            onClick={onLogoClick || (() => onNavigate('home'))}
           >
             LINCCORA
           </button>
@@ -37,7 +37,7 @@ const Header = ({ searchQuery, onSearchChange, onSearch, onNavigate, favoritesCo
           </form>
 
           <div className="header-actions">
-            <button className="btn btn-secondary" onClick={() => onNavigate('home')}>
+            <button className="btn btn-secondary" onClick={onHomeClick || (() => onNavigate('home'))}>
               <Home size={16} />
               Home
             </button>
