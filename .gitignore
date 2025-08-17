@@ -39,3 +39,7 @@ Thumbs.db
 .env
 linkkora-frontend/node_modules
 linkkora-frontend/dist
+\n# Ignore macOS and temp frontend imports
+__MACOSX/
+linkkora-frontend-new/
+*.zip
