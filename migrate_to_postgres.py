@@ -51,20 +51,8 @@ class DatabaseMigrator:
                 schema = file.read()
             
             cursor = self.connection.cursor()
-            
-            # Split the schema into individual statements
-            statements = schema.split(';')
-            
-            for statement in statements:
-                statement = statement.strip()
-                if statement:
-                    try:
-                        cursor.execute(statement)
-                    except Exception as e:
-                        # Ignore errors for existing objects
-                        if "already exists" not in str(e):
-                            print(f"Warning: {e}")
-            
+            # Execute the full schema in a single call to preserve PL/pgSQL blocks
+            cursor.execute(schema)
             self.connection.commit()
             cursor.close()
             

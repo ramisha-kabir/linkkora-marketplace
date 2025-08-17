@@ -45,8 +45,11 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers to automatically update updated_at
+-- Make trigger creation idempotent
+DROP TRIGGER IF EXISTS update_brands_updated_at ON brands;
 CREATE TRIGGER update_brands_updated_at BEFORE UPDATE ON brands
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_products_updated_at ON products;
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
